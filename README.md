@@ -1,5 +1,5 @@
 	es := est.NewEst()
-	es = es.SetHost("89zx.com").SetPort(9200).SetProtocol("http").SetUser("yunlifang").SetPassword("YlfEs2020")
+	es = es.SetHost("xxx").SetPort(9200).SetProtocol("http").SetUser("xxx").SetPassword("xxx")
 	//if data, err := es.Table("table1").Add(est.M{"aaa": "排序4", "ccc": "444","sort":47}); err != nil {
 	//	log.Println("err：", err.Error())
 	//} else {
