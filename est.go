@@ -117,7 +117,7 @@ func (e *Est) Where(condition string, values ...interface{}) *Est {
 	//如果不存在and和or直接传递给条件数组
 	if andPos == -1 && orPos == -1 {
 		//将符号的两边都加上空格，便于取出
-		rep, _ := regexp.Compile(">|<|=|>=|<=|<>")
+		rep, _ := regexp.Compile(">=|<=|>|<|=|<>")
 		condition = rep.ReplaceAllStringFunc(condition, func(s string) string {
 			return " " + s + " "
 		})
