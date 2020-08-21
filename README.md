@@ -1,4 +1,5 @@
 1.初始化
+
 	es := est.NewEst()
 	es = es.SetHost("xxx").SetPort(9200).SetProtocol("http").SetUser("xxx").SetPassword("xxx")
 
