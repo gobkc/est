@@ -294,7 +294,7 @@ func (e *Est) Find() (m interface{}, err error) {
 			if err != nil {
 				newV = fmt.Sprintf(`"%v"`, condition.V)
 			}
-			tag = append(tag, fmt.Sprintf(`{ "match": { "%s": %s } }`, condition.K, newV))
+			tag = append(tag, fmt.Sprintf(`{ "match": { "%s": {"query":%s,"minimum_should_match":"100%s"} } }`, condition.K, newV, "%"))
 			break
 		case ">":
 			tag = append(tag, fmt.Sprintf(`{ "range": { "%s": { "gte": %v } } }`, condition.K, condition.V))
