@@ -284,7 +284,7 @@ func (e *Est) Find() (m interface{}, err error) {
 		e.sort,
 	)
 	//获取条件
-	var tag = ""
+	var tag []string
 	for _, condition := range e.conditions {
 		switch condition.C {
 		case "=":
@@ -294,23 +294,23 @@ func (e *Est) Find() (m interface{}, err error) {
 			if err != nil {
 				newV = fmt.Sprintf(`"%v"`, condition.V)
 			}
-			tag += fmt.Sprintf(`{ "match": { "%s": %s } }`, condition.K, newV)
+			tag = append(tag, fmt.Sprintf(`{ "match": { "%s": %s } }`, condition.K, newV))
 			break
 		case ">":
-			tag += fmt.Sprintf(`{ "range": { "%s": { "gte": %v } } }`, condition.K, condition.V)
+			tag = append(tag, fmt.Sprintf(`{ "range": { "%s": { "gte": %v } } }`, condition.K, condition.V))
 			break
 		case ">=":
-			tag += fmt.Sprintf(`{ "range": { "%s": { "gt": %v } } }`, condition.K, condition.V)
+			tag = append(tag, fmt.Sprintf(`{ "range": { "%s": { "gt": %v } } }`, condition.K, condition.V))
 			break
 		case "<":
-			tag += fmt.Sprintf(`{ "range": { "%s": { "lte": %v } } }`, condition.K, condition.V)
+			tag = append(tag, fmt.Sprintf(`{ "range": { "%s": { "lte": %v } } }`, condition.K, condition.V))
 			break
 		case "<=":
-			tag += fmt.Sprintf(`{ "range": { "%s": { "lt": %v } } }`, condition.K, condition.V)
+			tag = append(tag, fmt.Sprintf(`{ "range": { "%s": { "lt": %v } } }`, condition.K, condition.V))
 			break
 		}
 	}
-	var json = fmt.Sprintf(`{ "query": { "bool": { "must": [ %s ] } } }`, tag)
+	var json = fmt.Sprintf(`{ "query": { "bool": { "must": [ %s ] } } }`, strings.Join(tag, ","))
 	var data M
 	if data, err = e.do("GET", e.findAPI, []byte(json)); err != nil {
 		return data, err
@@ -346,12 +346,48 @@ func (e *Est) Find() (m interface{}, err error) {
 	}
 
 	return M{
-		"data":         outData,
-		"total":        total,
-		"page": e.page,
-		"page_size":    e.pageSize,
-		"page_num":     pageNum,
+		"data":      outData,
+		"total":     total,
+		"page":      e.page,
+		"page_size": e.pageSize,
+		"page_num":  pageNum,
 	}, err
+}
+
+//Get 查找一条数据 通常和 Where("id=?",id)配合
+func (e *Est) Get() (m map[string]interface{}, err error) {
+	//判断是否有ID，ID参数通过where方法传递
+	if e.table == "" {
+		return m, errors.New(`table不存在，请使用SetTable("tableName")`)
+	}
+	//判断是否有ID，ID参数通过where方法传递
+	if e.id == "" {
+		return m, errors.New(`ID不存在，请使用Where("id=?",1)来传递`)
+	}
+	e.findAPI = fmt.Sprintf("%s://%s:%d/%s/_doc/%s",
+		e.protocol,
+		e.host,
+		e.port,
+		e.table,
+		e.id,
+	)
+	var mJSON []byte
+	var data M
+	if data, err = e.do("GET", e.findAPI, mJSON); err != nil {
+		return data, err
+	}
+
+	defer func() {
+		e.clearData() //该处理的已经处理完了，可以清空临时内部数据了，防止est对象下一次调用时，产生脏数据
+	}()
+
+	//处理数据
+	if outData, ok := data["_source"]; ok {
+		m = outData.(map[string]interface{})
+		m["id"] = e.id
+	}
+
+	return m, err
 }
 
 //do 执行请求,内部方法
